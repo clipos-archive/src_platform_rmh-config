@@ -1,0 +1,209 @@
+#!/bin/sh
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+bindir="@bindir@"
+
+PERSONNALITY="${0}"
+# Default config
+[[ -z "${NSSCERTS_PATH}" ]] && NSSCERTS_PATH=$prefix/share/nss-certs
+[[ -z "${HOME_DIR}" ]] && HOME_DIR=/home/user
+
+LAST_INSTALL_FILE=last-install
+LAST_UPDATE_FILE=last-update
+TRUST_NSS="no"
+INIT_DB="yes"
+CHECK_LASTUPDATE_FILE_AGE=no
+CERTS_TO_ADD=
+
+CERTUTIL=certutil
+LOCKPROFILE=$bindir/lockprofile
+OPENSSL=openssl
+SUBDIRS=".mozilla .mozilla-thunderbird .thunderbird"
+
+usage() {
+    echo "${PERSONNALITY} [-H dir] [-S dir] [-IiTt] [-A certs] [-C]"
+    echo "options: "
+    echo "   -H : home directory where to look for cert8.db files"
+    echo "   -S : sub directories where to look for cert8.db files"
+    echo "           (default is \"${SUBDIRS}\")"
+    echo "   -I : empty the database before doing anything (default)"
+    echo "   -i : do not empty the database"
+    echo "   -T : do not change the trust options about builtin certificates"
+    echo "   -t : do not trust any of the certificates present in \$NSSCERTS_PATH (default)"
+    echo "   -A : add a trusted certificate (the name may not contain spaces)"
+    echo "   -C : checks if the profile is older than the nss certs before doing anything"
+}
+
+
+
+# get_name_from_pem CERT_NAME
+get_name_from_pem () {
+    local CERT_NAME
+    CERT_NAME=$(basename "${1}" | sed -e "s/.crt$//
+s/.pem$//
+s/__/, /g
+s/_/ /g
+s/=\(.*\)=/(\1)/g")
+
+    echo "${CERT_NAME}" | tr -cd 'a-zA-Z0-9\-_ .,:/()' 2> /dev/null
+}
+
+
+prepare_CERTUTIL_CMDS () {
+    if [ -n "${CERTUTIL_CMDS_PREPARED}" ]; then
+	return 0;
+    fi
+  
+    CERTUTIL_CMDS_PREPARED=true
+
+    if [ "${TRUST_NSS}" = "no" ]; then
+	for BUILTIN_CERT in "${NSSCERTS_PATH}"/*.crt; do
+	    if [ -f "${BUILTIN_CERT}" ]; then 
+		if [ "${BUILTIN_CERT}" != "/usr/local/share/ca-certificates/mozilla/Entrust.net_Secure_Personal_CA.crt" ]; then
+		    BUILTIN_NAME=$(get_name_from_pem "${BUILTIN_CERT}")
+		    echo "-A -n \"${BUILTIN_NAME}\" -t c,c,c -i \"${BUILTIN_CERT}\"" >> "${CERTUTIL_CMDS}"
+		fi
+	    fi
+	done
+    fi
+    
+    for CA_ROOT in ${CERTS_TO_ADD}; do
+	CA_NAME=$(get_name_from_pem "${CA_ROOT}")
+	echo "-A -n ${CA_NAME} -t CT,c,c -i ${CA_ROOT}" >> "${CERTUTIL_CMDS}"
+    done
+}
+
+
+# handle_one_profile PROFILE_DIR
+handle_one_profile () {
+    PROFILE_DIR=$1
+
+
+    ${LOCKPROFILE} "${PROFILE_DIR}" true 2> /dev/null
+    case $? in
+	1)
+	    echo "$PROFILE_DIR: invalid profile."
+	    return 1
+	    ;;
+	2)
+	    echo "Profile $PROFILE_DIR already locked."
+	    return 1
+	    ;;
+    esac
+
+    if [ x"${CHECK_LASTUPDATE_FILE_AGE}" = "xno" -o \
+	\( ! -f "${PROFILE_DIR}/${LAST_UPDATE_FILE}" \) -o \
+	"${PROFILE_DIR}/${LAST_UPDATE_FILE}" -ot "${NSSCERTS_PATH}/${LAST_INSTALL_FILE}" -o \
+	"${TIMEREF}" -ot "${PROFILE_DIR}/${LAST_UPDATE_FILE}" ]
+    then
+	prepare_CERTUTIL_CMDS
+
+	LOCAL_CERTUTIL_CMDS=$(mktemp /tmp/local_certutil_cmds.XXXXXX)
+
+	if [ "${INIT_DB}" = "yes" ]; then
+	    error=""
+	    ( ${LOCKPROFILE} "${PROFILE_DIR}" "${CERTUTIL}" -d "${PROFILE_DIR}" -L || error=yes ) | \
+		sed -n 's/\(.*[^ ]\) \+[TuwgGcCpP]*,[TuwgGcCpP]*,[TuwgGcCpP]* *$/-D -n "\1"/p' >> "${LOCAL_CERTUTIL_CMDS}"
+
+	    if [ -n "$error" ]; then
+		echo "An error occured while listing certificates in ${PROFILE_DIR}:"
+		echo
+		rm "${LOCAL_CERTUTIL_CMDS}"
+		return 1
+	    fi
+	fi
+	cat "${CERTUTIL_CMDS}" >> "${LOCAL_CERTUTIL_CMDS}"
+	
+	OUTPUT=$(${LOCKPROFILE} "${PROFILE_DIR}" "${CERTUTIL}" -d "${PROFILE_DIR}" -B -i "${LOCAL_CERTUTIL_CMDS}" 2>&1)
+	if [ "$?" -ne 0 ]; then
+	    echo "An error occured while treating ${PROFILE_DIR}:"
+	    echo $OUTPUT
+	    echo "The commands executed can be found in ${LOCAL_CERTUTIL_CMDS}"
+	    echo
+	    return 1
+	fi
+	
+	#rm "${CERTUTIL_OUT}"
+	rm "${LOCAL_CERTUTIL_CMDS}"
+	touch "${PROFILE_DIR}/${LAST_UPDATE_FILE}"
+	
+	echo "Profile ${PROFILE_DIR} updated with success."
+    else
+	echo "Profile ${PROFILE_DIR} is already up-to-date. Nothing to do."
+    fi
+
+    echo
+    return 0;
+}
+    
+
+
+################## MAIN ####################
+
+while getopts H:S:IiTtA:C arg ; do
+    case $arg in
+	H) 
+	    HOME_DIR="${OPTARG}"
+	    ;;
+	S) 
+	    SUBDIRS="${OPTARG}"
+	    ;;
+	I)	
+	    INIT_DB="yes"
+	    ;;
+	i)
+	    INIT_DB="no"
+	    ;;
+	T)	
+	    TRUST_NSS="yes"
+	    ;;
+	t)
+	    TRUST_NSS="no"
+	    ;;
+	A)
+	    CERTS_TO_ADD="${CERTS_TO_ADD} ${OPTARG}"
+	    ;;
+	C)
+	    CHECK_LASTUPDATE_FILE_AGE=yes
+	    ;;
+	*)
+	    ewarn "Unsupported option: ${arg}"
+	    usage
+	    exit 1
+	    ;;
+    esac
+done
+
+if [ ! -d "${HOME_DIR}" ]; then
+    echo "${HOME_DIR} is not a valid directory"
+    usage
+    exit 1
+fi
+
+for CA_ROOT in ${CERTS_TO_ADD}; do
+    if ! (${OPENSSL} x509 -noout -in "${CA_ROOT}" &> /dev/null) ; then
+	echo "${CA_ROOT} is not a valid x509 certificate."
+	usage
+	exit 1
+    fi
+done
+
+export TIMEREF=$(mktemp /tmp/certutil_timeref.XXXXXX)
+export CERTUTIL_CMDS=$(mktemp /tmp/certutil_cmds.XXXXXX)
+export RETVAL=$(mktemp /tmp/certutil_retval.XXXXXX)
+
+for SD in ${SUBDIRS}; do
+    echo "Looking into ${HOME_DIR}/${SD}"
+    find "${HOME_DIR}/${SD}" -iname cert8.db 2> /dev/null | while read CERT_DB; do
+	handle_one_profile $(dirname "${CERT_DB}") || echo "1" > "$RETVAL"
+    done
+done
+
+retval=$(cat "$RETVAL")
+
+rm "${CERTUTIL_CMDS}"
+rm "${TIMEREF}"
+rm "${RETVAL}"
+
+exit $retval

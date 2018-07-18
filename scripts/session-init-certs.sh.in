@@ -1,0 +1,62 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+
+configFilename=$HOME/.rmh_config
+
+# getVal VARIABLE prints the value corresponding to
+# VARIABLE in .rmh_config, or "" if it does not exist
+getVal () {
+    VARNAME=$1
+    if [ -n "$VARNAME" ]; then
+	sed -n 's/ *'"$VARNAME"' *= *\(.*[^ ]\) */\1/p' "$configFilename" | head -n 1
+    fi
+}
+
+
+
+# main
+
+if [ ! -x "$bindir/init-mozilla-certs.sh" ]; then
+    echo "Unable to find init-mozilla-certs.sh in $bindir"
+    exit 1
+fi
+
+case $(getVal "CERTDB_AUTOMATIC" | tr "A-Z" "a-z") in
+    yes|true)
+	# We go on
+	;;
+    no|false)
+	echo "Nothing to do"
+	exit 0
+	;;
+    *)
+	echo "Invalid config file"
+	exit 1
+	;;
+esac
+
+case $(getVal "CERTDB_INIT" | tr "A-Z" "a-z") in
+    yes|true)
+	init="-I"
+	case $(getVal "CERTDB_TRUSTED_CERTS" | tr "A-Z" "a-z") in
+	    yes|true)
+		trustLibNSS="-T"
+		;;
+	    *)
+		trustLibNSS="-t"
+		;;
+	esac
+	;;
+    *)
+	init="-i"
+	trustLibNSS="-T"
+	;;
+esac
+
+certs=$(getVal "CERTDB_TRUSTED_CERTS")
+if [ -n "$certs" ]; then
+    certs="-A $certs"
+fi
+
+exec "$bindir/init-mozilla-certs.sh" -H "$HOME" "$init" "$trustLibNSS" "$certs" "-C"

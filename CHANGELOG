@@ -1,0 +1,154 @@
+# CLIP ChangeLog for app-clip/rmh-config
+
+  23 Sep 2014; Yves-Alexis Perez <clipos@ssi.gouv.fr>
+  rmh-config-1.1.6.ebuild:
+  Add amd64 keyword, masked for now.
+  
+*rmh-config-1.1.6 (23 Jan 2014)
+
+  23 Jan 2014; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.6.ebuild, -rmh-config-1.1.5.ebuild:
+  Fix build - missing include.
+
+*rmh-config-1.1.5 (15 May 2013)
+
+  15 May 2013; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.5.ebuild, -rmh-config-1.1.4.ebuild:
+  Fix warnings in desktop files.
+
+  15 May 2013; Vincent Strubel <clipos@ssi.gouv.fr>
+  rmh-config-1.1.4.ebuild:
+  src_compile() -> src_configure() to fix QA warning.
+
+*rmh-config-1.1.4 (15 May 2013)
+
+  15 May 2013; Yves-Alexis Perez <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.4.ebuild, -rmh-config-1.1.3-r1.ebuild:
+  Fix certificate address.
+
+*rmh-config-1.1.3-r1 (11 Oct 2012)
+
+  11 Oct 2012; Mickaël Salaün <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.3-r1.ebuild, -rmh-config-1.1.3.ebuild,
+  files/splash, -files/splash.png, -files/Theme.rc:
+  Add Thunderbird default configuration for clip-anssi.
+  Add the category.
+  Remove old KDE 3 splashscreen.
+
+*rmh-config-1.1.3 (05 Oct 2012)
+
+  05 Oct 2012; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.3.ebuild, -rmh-config-1.1.2.ebuild:
+  Fix build (-lcrypto missing).
+
+*rmh-config-1.1.2 (04 Oct 2012)
+
+  04 Oct 2012; Yves-Alexis Perez <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.2.ebuild, -rmh-config-1.1.1-r1.ebuild:
+  Update certificate and LDAP URLs.
+
+*rmh-config-1.1.1-r1 (26 Mar 2012)
+
+  26 Mar 2012; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.1-r1.ebuild, -rmh-config-1.1.1.ebuild:
+  Force rebuild
+
+*rmh-config-1.1 (24 Oct 2011)
+
+  12 Oct 2011; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-1.1.ebuild, -rmh-config-1.0.ebuild:
+  Code clean-up, so it really is full Qt4-compliant.
+
+*rmh-config-1.0 (12 Oct 2011)
+
+  12 Oct 2011; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-1.0.ebuild, -rmh-config-0.8.ebuild:
+  Initial, quick-and-dirty, switch to Qt4. Might be a bit
+  presomptuous to call this a 1.0...
+
+*rmh-config-0.8 (06 Sep 2010)
+
+  06 Sep 2010; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-0.8.ebuild, -rmh-config-0.7-r1.ebuild:
+  Fix nsscertutil -> certutil rename.
+
+  10 Aug 2010; Vincent Strubel <clipos@ssi.gouv.fr>
+  rmh-config-0.7-r1.ebuild, +files/rmh-config.png:
+  Install missing icon.
+
+*rmh-config-0.7-r1 (08 Aug 2010)
+
+  09 Aug 2010; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.7-r1.ebuild, -rmh-config-0.7.ebuild:
+  Bump to link with new libldap.
+
+*rmh-config-0.7 (03 Feb 2010)
+
+  03 Feb 2010; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.7.ebuild, -rmh-config-0.6-r2.ebuild:
+  Some bugfixes in init-mozilla-certs script. Add the lockfile
+  program to share gracefully the access to the profiles with
+  mozilla apps. Add a session script to clean certs at session
+  opening.
+
+*rmh-config-0.6-r2 (02 Feb 2010)
+
+  02 Feb 2010; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-0.6-r2.ebuild, -rmh-config-0.6-r1.ebuild,
+  +files/Theme.rc, files/splash:
+  Fix RMH splash theme - 0.6-r1 overwrote a ksplash file (splash.png).
+  We need to install an altogether different splash theme to avoid
+  conflicts. Also add a kde4 ksplash theme (as a separate distfile), 
+  and modify the user-data update script to take into account both
+  KDE4 and KDE3
+
+*rmh-config-0.6-r1 (26 Jan 2010)
+
+  26 Jan 2010; Florent Chabaud <clipos@ssi.gouv.fr>
+  +rmh-config-0.6-r1.ebuild, -rmh-config-0.6.ebuild,
+  +files/splash, +files/splash.png:
+  Avertissement reglementaire d'entree sur un reseau DR-SF. Ticket #201 du reseau de test.
+
+*rmh-config-0.6 (28 Dec 2009)
+
+  28 Dec 2009; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-0.6.ebuild, -rmh-config-0.5-r1.ebuild:
+  Bump. Icon fixed for KDE4.
+
+*rmh-config-0.5-r1 (22 Sep 2009)
+
+  22 Sep 2009; Vincent Strubel <clipos@ssi.gouv.fr>
+  +rmh-config-0.5-r1.ebuild, -rmh-config-0.5.ebuild:
+  Silent bump to force rebuild.
+
+  20 Aug 2009; Vincent Strubel <clipos@ssi.gouv.fr>
+  rmh-config-0.5.ebuild:
+  Added DESCRIPTION_FR. Fix compilation when qt4 present.
+
+*rmh-config-0.5 (17 Jul 2009)
+
+  17 Jul 2009; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.5.ebuild -rmh-config-0.3.ebuild
+  Now handles the Mozzila certificates.
+
+  15 Jul 2009; Vincent Strubel <clipos@ssi.gouv.fr>
+  rmh-config-0.3.ebuild:
+  Add conflict against ldap-light-client, to force its removal.
+
+*rmh-config-0.3 (15 Jul 2009)
+
+  15 Jul 2009; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.3.ebuild -rmh-config-0.2.ebuild
+  Add the admin button to reinit passwords
+
+*rmh-config-0.2 (10 Jul 2009)
+
+  10 Jul 2009; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.2.ebuild -rmh-config-0.1.ebuild
+  Add the correct handling of certificates
+
+*rmh-config-0.1 (09 Jul 2009)
+
+  09 Jul 2009; Olivier Levillain <clipos@ssi.gouv.fr>
+  +rmh-config-0.1.ebuild
+  Initial import of the new "ldap-light-client".

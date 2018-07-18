@@ -1,0 +1,73 @@
+AC_INIT(src/rmh-config.cpp)
+
+dnl Checks for programs.
+AC_PROG_CXX
+
+[
+if test "x$GCC" = "xyes"; then
+  CFLAGS="$CFLAGS -Wall -Wextra \
+	-Wstrict-prototypes -Wmissing-prototypes \
+	-Wcast-qual -Wcast-align -Wpointer-arith \
+	-Wnested-externs"
+fi
+]
+
+
+if test -z "$PKG_CONFIG"; then
+  PKG_CONFIG=pkg-config
+fi
+AC_SUBST(PKG_CONFIG)
+
+AC_MSG_CHECKING(that pkg-config runs)
+if "$PKG_CONFIG" --version > /dev/null 2>&1 ; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+  AC_MSG_ERROR([*** $PKG_CONFIG missing ***
+
+\'$PKG_CONFIG --version\' failed to run - make sure it is inside one of the
+directories in your PATH environment variable!
+
+pkg-config comes with the developement packages for GTK+-2.2, available at:
+
+    http://www.gtk.org])
+fi
+
+
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(unistd.h signal.h sys/wait.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_UID_T
+AC_TYPE_SIZE_T
+
+dnl SSL/TLS
+AC_CHECK_HEADERS(openssl/ssl.h)
+AC_CHECK_LIB(ssl, SSL_library_init)
+
+dnl LDAP lib
+AC_CHECK_HEADERS(ldap.h)
+AC_CHECK_LIB(ldap, ldap_initialize)
+AC_CHECK_LIB(lber, ber_free)
+
+dnl Checks for QT lib
+PKG_CHECK_MODULES(QT4_CORE, QtCore,,
+    AC_MSG_ERROR([[
+***
+*** Qt4 Core is required.
+***]])
+)
+
+PKG_CHECK_MODULES(QT4_GUI, QtGui,,
+    AC_MSG_ERROR([[
+***
+*** Qt4 Gui is required.
+***]])
+)
+
+
+FILES_TO_CREATE="Makefile src/Makefile scripts/Makefile utils/Makefile scripts/init-mozilla-certs.sh"
+FILES_TO_CREATE+=" rmh-config.desktop scripts/session-init-certs.sh"
+AC_OUTPUT($FILES_TO_CREATE)

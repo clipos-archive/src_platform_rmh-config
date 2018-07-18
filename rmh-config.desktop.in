@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Configure RM_H services
+Name[fr]=Configuration des services RM_H
+Comment=
+Icon=password
+Terminal=false
+Type=Application
+Categories=Settings;
+Exec=@prefix@/bin/rmh-config

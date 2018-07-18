@@ -1,0 +1,83 @@
+################# configure part ##############################
+CC = @CC@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@ @LIBS@
+
+LOCKPROFILE := lockprofile
+
+LOCKPROFILE_SRC = lockprofile.c
+
+EXES := ${LOCKPROFILE}
+
+
+.PHONY: all build install uninstall clean mrproper
+
+all: build
+
+###############################################################
+ifndef VERBOSE
+MAKEFLAGS += -s --no-print-directory
+ECHO = echo
+else 
+ECHO = echo > /dev/null
+endif
+
+OBJS_DIR ?= obj
+LOCKPROFILE_OBJFILES := ${foreach file, ${patsubst %.c,%.o,${LOCKPROFILE_SRC}}, ${OBJS_DIR}/${file}}
+
+DEPS_DIR = ${OBJS_DIR}/.deps
+LOCKPROFILE_DEPFILES := ${foreach file, ${basename ${LOCKPROFILE_SRC}}, ${DEPS_DIR}/${file}.d}
+
+OBJFILES := ${LOCKPROFILE_OBJFILES}
+DEPFILES := ${LOCKPROFILE_DEPFILES}
+
+###############################################################
+
+${OBJS_DIR}:
+	mkdir -p ${OBJS_DIR}
+
+${DEPS_DIR}:
+	mkdir -p ${DEPS_DIR}
+
+
+${OBJS_DIR}/%.o:%.c Makefile
+	@${ECHO} "        CC        $<"
+	$(CC) $(CFLAGS) $(IFLAGS) -MT $@ -MD -MP -MF ${DEPS_DIR}/$*.d -c -o $@ $<
+
+${LOCKPROFILE}: ${LOCKPROFILE_OBJFILES}
+	@${ECHO} "        LD       $@"
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+
+build: ${OBJS_DIR} ${DEPS_DIR} ${EXES}
+
+install: build
+	list='$(EXES)'; for exe in $$list; do \
+		${ECHO} "        INST              ${DESTDIR}${bindir}/$$exe" ;\
+		install -D $$exe ${DESTDIR}${bindir}/$$exe ;\
+	done
+
+uninstall: 
+	list='$(EXES)'; for exe in $$list; do \
+		${ECHO} "        RM                ${DESTDIR}${bindir}/$$exe" ;\
+		rm -f  ${DESTDIR}${bindir}/$$exe ;\
+	done
+
+clean:
+	@${ECHO} "        CLEAN             ${EXES} ${MOCFILES} ${OBJFILES}"
+	rm -f ${EXES} ${OBJFILES} ${DEPFILES}
+
+mrproper: clean
+	rmdir ${DEPS_DIR} ${OBJS_DIR}
+	rm -f Makefile
+
+
+Makefile: Makefile.in ../config.status
+	cd .. && ./config.status && cd src
+
+
+-include ${DEPFILES}

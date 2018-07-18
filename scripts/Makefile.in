@@ -1,0 +1,43 @@
+################# configure part ##############################
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+
+SCRIPTS := init-mozilla-certs.sh session-init-certs.sh
+
+.PHONY: all build install uninstall clean mrproper
+
+all: build
+
+###############################################################
+ifndef VERBOSE
+MAKEFLAGS += -s --no-print-directory
+ECHO = echo
+else 
+ECHO = echo > /dev/null
+endif
+###############################################################
+
+build: ${SCRIPTS}
+
+install: build
+	list='$(SCRIPTS)'; for exe in $$list; do \
+		${ECHO} "        INST              ${DESTDIR}${bindir}/$$exe" ;\
+		install -D $$exe ${DESTDIR}${bindir}/$$exe ;\
+	done
+
+uninstall: 
+	list='$(SCRIPTS)'; for exe in $$list; do \
+		${ECHO} "        RM                ${DESTDIR}${bindir}/$$exe" ;\
+		rm -f  ${DESTDIR}${bindir}/$$exe ;\
+	done
+
+clean:
+
+
+mrproper: clean
+	rm -f Makefile init-mozilla-certs.sh
+
+
+Makefile: Makefile.in ../config.status
+	cd .. && ./config.status && cd src
